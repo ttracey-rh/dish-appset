@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: hello-openshift
+  namespace: openshift-gitops
+spec:
+  generators:
+#  - matrix:
+#     generators: 
+      - clusterDecisionResource:
+          configMapRef: acm-placement
+          labelSelector:
+            matchLabels:
+              cluster.open-cluster-management.io/placement: all-openshift-clusters
+          requeueAfterSeconds: 180
+#      - git:
+#          repoURL: "git@gitlab.tom.local:tom/homelab-ocp-blueprint.git"
+#          revision: main
+#          files:
+#            - path: "siteconfig/*/values.yaml"
+  template:
+    metadata:
+      labels:
+        velero.io/exclude-from-backup: "true"
+      name: hello-openshift-{{name}}
+    spec:
+      destination:
+        namespace: dish-demo
+        server: '{{server}}'
+      project: default
+      sources:
+      - helm:
+         valueFiles:
+           - values-tom.yaml
+        path: siteconfig/{{ name }}
+        repoURL: git@gitlab.tom.local:tom/homelab-ocp-blueprint.git
+        targetRevision: main
+#      - repoURL: http://admin.tom.lab:8080
+#        chart: hello-openshift
+#        targetRevision: 0.1.3
+#        path: siteconfig/{{ name }}
+#        helm:
+#         valueFiles:
+#           - values-tom.yaml
+#           - http://gitlab.tom.local/tom/homelab-ocp-blueprint/-/raw/main/siteconfig/{{ name }}/values-tom.yaml
+#           - $values/siteconfig/{{ name }}/values-tom.yaml
+#      - repoURL: git@gitlab.tom.local:tom/homelab-ocp-blueprint.git
+#        targetRevision: main
+#        ref: values
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - PruneLast=true
+      ignoreDifferences:
+      - group: apps
+        kind: Deployment
+        jsonPointers: 
+         - "/metadata/annotations/deployment.kubernetes.io~1revision"
