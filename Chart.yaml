@@ -1,0 +1,9 @@
+apiVersion: v2
+description: hello-openshift
+name: hello-openshift
+version: 0.1.5
+
+dependencies:
+  - name: hello-openshift
+    version: 0.1.5
+    repository: http://admin.tom.lab:8080
